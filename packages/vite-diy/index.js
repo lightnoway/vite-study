@@ -41,7 +41,7 @@ app.use(async (ctx, next) => {
         // console.log('parseRet', parseRet);
         if (ctx.query.type === 'template') {
             //template
-            code = parseSFC.compileTemplate(parseRet.descriptor).code;
+            code = parseSFC.compileTemplate({ source: parseRet.descriptor.template.content }).code;
             // console.log('template========', code);
         } else {
             //js 
@@ -61,7 +61,9 @@ export default __script`
 app.use(async (ctx, next) => {
     if (ctx.type === 'application/javascript') {
         const content = await streamToString(ctx.body); //?? 不改写body时 ERR_CONTENT_LENGTH_MISMATC
-        ctx.body = content.replace(/(\s+from\s+['"])([\w@])/g, `$1${modulePrefix}$2`);
+        ctx.body = content
+            .replace(/(\s+from\s+['"])([\w@])/g, `$1${modulePrefix}$2`)
+            .replace(/process\.env\.NODE_ENV/g, JSON.stringify('development'))
         // console.log(225, ctx.type);
     }
     return next();
@@ -77,7 +79,7 @@ app.listen(port, () => {
  * @param {*} stream 
  */
 function streamToString(stream) {
-    console.log('type stream', typeof (stream));
+    // console.log('type stream', typeof (stream));
     if (typeof (stream) === 'string') {
         return stream;
     }
