@@ -1,6 +1,6 @@
 {
   "name": "vite-app",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "scripts": {
     "dev": "vite",
     "build": "vite build"
@@ -9,7 +9,8 @@
     "vue": "^3.0.0-rc.1"
   },
   "devDependencies": {
+    "@vue/compiler-sfc": "^3.0.0-rc.1",
     "vite": "^1.0.0-rc.1",
-    "@vue/compiler-sfc": "^3.0.0-rc.1"
+    "vite-diy": "0.0.1"
   }
 }
