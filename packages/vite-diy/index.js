@@ -10,9 +10,10 @@ const modulePrefix = `/@modules/`;
 //3 响应./@modules/
 app.use(async (ctx, next) => {
     if (ctx.path.startsWith(modulePrefix)) {
-        //通过 vue 拿到 其package.module指向的文件; 此处拿package.json  未考虑通用性
+        //响应 `import vue`: 拿到 其package.module指向的文件; 
         const moduleName = ctx.path.substr(modulePrefix.length);
         const modulePkg = require(path.join(require.resolve(moduleName), '../package.json'));
+        //利用require.resolve支持从上级目录模块 ; 此处拿package.json  未考虑通用性
         const moduleFilePath = path.join(require.resolve(moduleName), '../', modulePkg.module);
         const moduleFilePathP = path.parse(moduleFilePath);
         ctx.overrideSend = [ctx, moduleFilePathP.base, { root: moduleFilePathP.dir }];
@@ -22,6 +23,9 @@ app.use(async (ctx, next) => {
 
 //1 静态文件服务器
 app.use(async (ctx, next) => {
+    //send 静态文件服务, 响应文件,配置: url 到文件的映射
+    //- 基本:url 直接对应 cwd内的文件
+    //- 变体:url 对应 cwd外的文件，比如 cwd/../../node_modules/vue
     if (ctx.overrideSend) {
         await send(...ctx.overrideSend);
     } else {
@@ -33,16 +37,12 @@ app.use(async (ctx, next) => {
 //4 响应 .vue
 app.use(async (ctx, next) => {
     if (ctx.path.endsWith('.vue')) {
-        // console.log('.vue', ctx.path);
-        //.vue 直接被响应了, 但实际需要的parse后的文件
-        // if(ctx.query.)
+        //对响应.vue 进行加工
         let code = await streamToString(ctx.body);
         const parseRet = parseSFC.parse(code);
-        // console.log('parseRet', parseRet);
         if (ctx.query.type === 'template') {
             //template
             code = parseSFC.compileTemplate({ source: parseRet.descriptor.template.content }).code;
-            // console.log('template========', code);
         } else {
             //js 
             code = parseRet.descriptor.script.content
@@ -57,7 +57,7 @@ export default __script`
     return next();
 });
 
-//2 替换import 中 字母/@ 开头的库的路径
+//2 修改 application/javascript 响应： import 路径, process.env.NODE_ENV， 
 app.use(async (ctx, next) => {
     if (ctx.type === 'application/javascript') {
         const content = await streamToString(ctx.body); //?? 不改写body时 ERR_CONTENT_LENGTH_MISMATC
