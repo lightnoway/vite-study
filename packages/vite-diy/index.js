@@ -7,6 +7,18 @@ const parseSFC = require('@vue/compiler-sfc');
 const app = new Koa();
 
 const modulePrefix = `/@modules/`;
+const TYPE_JS = 'application/javascript';
+
+//5 响应 import 图片
+app.use(async (ctx, next) => {
+    if (ctx.path.endsWith('.png') && ctx.req.headers.accept === '*/*') {
+        ctx.body = `export default '${ctx.path}'`;
+        ctx.type = TYPE_JS;
+        return;
+    }
+    return next();
+    //另一种做法：参考vite ,修改代码: 删除- import x from 'picUrl'; 替换- x 为picUrl
+})
 //3 响应./@modules/
 app.use(async (ctx, next) => {
     if (ctx.path.startsWith(modulePrefix)) {
@@ -52,14 +64,14 @@ __script.render = __render
 export default __script`
         }
         ctx.body = code;
-        ctx.type = 'application/javascript';
+        ctx.type = TYPE_JS;
     }
     return next();
 });
 
 //2 修改 application/javascript 响应： import 路径, process.env.NODE_ENV， 
 app.use(async (ctx, next) => {
-    if (ctx.type === 'application/javascript') {
+    if (ctx.type === TYPE_JS) {
         const content = await streamToString(ctx.body); //?? 不改写body时 ERR_CONTENT_LENGTH_MISMATC
         ctx.body = content
             .replace(/(\s+from\s+['"])([\w@])/g, `$1${modulePrefix}$2`)
@@ -106,4 +118,4 @@ function streamToString(stream) {
     })
 }
 
-//todo 响应图片，css
+//todo css

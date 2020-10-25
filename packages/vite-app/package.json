@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "vite",
     "dev-diy": "vite-diy",
+    "dev-diy-watch": "nodemon ../vite-diy/index.js -w ../vite-diy/index.js",
     "build": "vite build"
   },
   "dependencies": {
