@@ -9,15 +9,30 @@ const app = new Koa();
 const modulePrefix = `/@modules/`;
 const TYPE_JS = 'application/javascript';
 
-//5 响应 import 图片
+//5 响应 import assert
 app.use(async (ctx, next) => {
-    if (ctx.path.endsWith('.png') && ctx.req.headers.accept === '*/*') {
-        ctx.body = `export default '${ctx.path}'`;
-        ctx.type = TYPE_JS;
-        return;
+    if (ctx.req.headers.accept === '*/*') {
+        if (ctx.path.endsWith('.png')) {
+            ctx.body = `export default '${ctx.path}'`;
+            ctx.type = TYPE_JS;
+            return;
+            //另一种做法：参考vite ,修改代码: 删除- import x from 'picUrl'; 替换- x 为picUrl
+        }
+
+        if (ctx.path.endsWith('.css')) {
+            //创建<link href /> 参考：https://github.com/webpack-contrib/style-loader/blob/master/src/runtime/injectStylesIntoLinkTag.js
+            ctx.body = `
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = ${JSON.stringify(ctx.path)};
+document.head.append(link);
+`;
+            ctx.type = TYPE_JS;
+            return;
+            //另一种做法: 参考 vite/client/updateStyle 使用 CSSStyleSheet插入样式
+        }
     }
     return next();
-    //另一种做法：参考vite ,修改代码: 删除- import x from 'picUrl'; 替换- x 为picUrl
 })
 //3 响应./@modules/
 app.use(async (ctx, next) => {
@@ -117,5 +132,3 @@ function streamToString(stream) {
         });
     })
 }
-
-//todo css
