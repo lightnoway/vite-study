@@ -70,6 +70,7 @@ app.use(async (ctx, next) => {
         if (ctx.query.type === 'template') {
             //template
             code = parseSFC.compileTemplate({ source: parseRet.descriptor.template.content }).code;
+            
         } else {
             //js 
             code = parseRet.descriptor.script.content
