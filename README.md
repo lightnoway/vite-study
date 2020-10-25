@@ -1,6 +1,20 @@
 ## vite-study
 vite 学习， 原理demo， 一些基础设施的尝试
+### 目录结构
+- package.json 配置 yarn workspace 
+- packages/vite-app: vite 创建的项目,没改功能，作为 vite 或vite-diy 的执行场景
+- packages/vite-diy:
 
+### yarn 脚本
+- 根目录执行`yarn install` 安装yarn workspace 内依赖；
+    - 不要使用 `npm install`: 不支持 yarn workspace
+- 观摩vite: 根目录执行 `yarn workspace vite-app run dev`
+- 开发模式: 根目录执行 `yarn workspace vite-app run dev-diy-watch`
+    - 以 vite-diy 启动 vite-app
+    - nodemon watch `vite-diy/index.js` 文件变化
+
+- 其他
+    - 验证workspace内link可用:根目录执行 `yarn workspace vite-app run dev-diy`
 
 ## 看点/主线
 vite 如何响应 各类型模块的 `import` 请求
@@ -8,15 +22,41 @@ vite 如何响应 各类型模块的 `import` 请求
 - 样式
 - vue 的sfc 组合拆分 
 
+yarn在workspace范围内: install,link
+
+koa ,koa-send,及中间件 的简单应用
+
 
 ## 记录
 ### yarn workspace使用
-workspace内repo 相互link
+workspace内install 模块install到哪？
+- 符合 子项目(如 vite-app,vite-diy)  require 模块规则
+    - 本目录找不到，一直沿着向父目录在 node_modules 中找
+- 子项目间可以共用模块，不必重复install
+- 不同版本的同名模块处理
+    - 不能共存：
+        - 一个项目的package.json 中dependency
+        - 同一node_modules目录
+    - 不同项目依赖不同版本同名模块时，错开node_modules目录安装，比如安装到各自的node_modules目录
+
+workspace内repo(子项目) 相互link
 - workspace外的办法:`yarn link`
     - 不应该修改/扩展 `yarn link` 功能;`yarn link` 用作全局**范围**依赖
 - workspace范围内 link 做法:  
-    - workspace 内repo 的pkg.name,pkg.version 与pkg.dependence 一致时
-    - `yarn install` 自动link
+    - `yarn install` 自动在根目录node_modules中 link 子项目
+        - 如果子项目要link使用其他子项目,办法如下
+            - 直接使用: 父级 node_modules 在 require.resolve 查找范围内
+            - `yarn add` 相对路径本地模块: 如 `yarn/npm add ../vite-diy`
+                - npm原生姿势，不依赖yarn workspace
+        -  如果子项目要使用其他子项目的不同版本: 
+            - `yarn add` 时加版本号使用在线版本
+            - `yarn add` 相对路径本地模块
+
+    - 验证link: 根目录执行 `ls -al  node_modules|grep vite-` 返回如下
+    ```sh 
+    lrwxr-xr-x    vite-app -> ../packages/vite-app
+    lrwxr-xr-x    vite-diy -> ../packages/vite-diy
+    ```
 
 ### webServer middleware
 - 1 别名path转换，
